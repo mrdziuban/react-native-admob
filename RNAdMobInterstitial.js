@@ -71,7 +71,7 @@ const tryShowNewInterstitial = (testID) => {
 
 module.exports = {
   ...RNAdMobInterstitial,
-  requestAd: (cb = () => {}) => RNAdMobInterstitial.requestAd(cb), // requestAd callback is optional
+  requestAd: (targetingData, cb = () => {}) => RNAdMobInterstitial.requestAd(targetingData, cb), // requestAd callback is optional
   showAd: (cb = () => {}) => RNAdMobInterstitial.showAd(cb),       // showAd callback is optional
   tryShowNewInterstitial,
   addEventListener,
