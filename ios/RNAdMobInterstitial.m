@@ -1,4 +1,6 @@
 #import "RNAdMobInterstitial.h"
+#import "RCTConvert.h"
+#import <CoreLocation/CoreLocation.h>
 
 @implementation RNAdMobInterstitial {
   GADInterstitial  *_interstitial;
@@ -29,7 +31,8 @@ RCT_EXPORT_METHOD(setTestDeviceID:(NSString *)testDeviceID)
   _testDeviceID = testDeviceID;
 }
 
-RCT_EXPORT_METHOD(requestAd:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(requestAd:(NSDictionary *)targetingData
+                   callback:(RCTResponseSenderBlock)callback)
 {
   if ([_interstitial hasBeenUsed] || _interstitial == nil) {
     _requestAdCallback = callback;
@@ -38,6 +41,27 @@ RCT_EXPORT_METHOD(requestAd:(RCTResponseSenderBlock)callback)
     _interstitial.delegate = self;
 
     GADRequest *request = [GADRequest request];
+    if([targetingData[@"gender"] isEqualToString:@"male"]){
+      request.gender = kGADGenderMale;
+    } else {
+      request.gender = kGADGenderFemale;
+    }
+
+    NSDateComponents *components = [[NSDateComponents alloc] init];
+    components.month = [RCTConvert NSInteger:targetingData[@"month"]];
+    components.day = [RCTConvert NSInteger:targetingData[@"day"]];
+    components.year = [RCTConvert NSInteger:targetingData[@"year"]];
+    request.birthday = [[NSCalendar currentCalendar] dateFromComponents:components];
+
+    CLLocation *currentLocation = [[CLLocation alloc]
+                                    initWithLatitude:[RCTConvert double:targetingData[@"lat"]]
+                                    longitude:[RCTConvert double:targetingData[@"long"]]];
+    if (currentLocation) {
+      [request setLocationWithLatitude:currentLocation.coordinate.latitude
+                             longitude:currentLocation.coordinate.longitude
+                              accuracy:currentLocation.horizontalAccuracy];
+    }
+
     if(_testDeviceID) {
       if([_testDeviceID isEqualToString:@"EMULATOR"]) {
         request.testDevices = @[kGADSimulatorID];
@@ -50,6 +74,7 @@ RCT_EXPORT_METHOD(requestAd:(RCTResponseSenderBlock)callback)
     callback(@[@"Ad is already loaded."]); // TODO: make proper error via RCTUtils.h
   }
 }
+
 
 RCT_EXPORT_METHOD(showAd:(RCTResponseSenderBlock)callback)
 {
