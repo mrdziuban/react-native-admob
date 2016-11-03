@@ -75,6 +75,8 @@ module.exports = {
   showAd: (cb = () => {}) => RNAdMobInterstitial.showAd(cb),       // showAd callback is optional
   setTargetingData: targetingData => RNAdMobInterstitial.setTargetingData(targetingData),
   setGender: gender => RNAdMobInterstitial.setGender(gender),
+  setBirthday: birthday => RNAdMobInterstitial.setBirthday(birthday),
+  setLocation: coordinates => RNAdMobInterstitial.setLocation(coordinates),
   tryShowNewInterstitial,
   addEventListener,
   removeEventListener,
