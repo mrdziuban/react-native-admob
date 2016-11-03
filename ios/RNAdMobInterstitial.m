@@ -8,6 +8,9 @@
   NSString *_testDeviceID;
   RCTResponseSenderBlock _requestAdCallback;
   RCTResponseSenderBlock _showAdCallback;
+  NSCalendar *_birthday;
+  GADGender *_gender;
+  CLLocation *_location;
 }
 
 @synthesize bridge = _bridge;
@@ -31,8 +34,61 @@ RCT_EXPORT_METHOD(setTestDeviceID:(NSString *)testDeviceID)
   _testDeviceID = testDeviceID;
 }
 
-RCT_EXPORT_METHOD(requestAd:(NSDictionary *)targetingData
-                   callback:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(setGender:(NSString *)gender)
+{
+  if([gender isEqualToString:@"male"]){
+    _gender = kGADGenderMale;
+  } else {
+    _gender = kGADGenderFemale;
+  }
+}
+
+RCT_EXPORT_METHOD(setLocation:(NSDictionary *)coordinates)
+{
+  if(coordinates[@"lat"] != nil && coordinates[@"long"] != nil){
+    _location = [[CLLocation alloc]
+                  initWithLatitude:[RCTConvert double:coordinates[@"lat"]]
+                  longitude:[RCTConvert double:coordinates[@"long"]]];
+  }
+}
+
+RCT_EXPORT_METHOD(setBirthday:(NSDictionary *)birthday)
+{
+  if(birthday[@"month"] != nil && birthday[@"day"] != nil && birthday[@"year"] != nil) {
+    NSDateComponents *components = [[NSDateComponents alloc] init];
+    components.month = [RCTConvert NSInteger:birthday[@"month"]];
+    components.day = [RCTConvert NSInteger:birthday[@"day"]];
+    components.year = [RCTConvert NSInteger:birthday[@"year"]];
+    _birthday = [[NSCalendar currentCalendar] dateFromComponents:components];
+  }
+}
+
+RCT_EXPORT_METHOD(setTargetingData:(NSDictionary *)targetingData)
+{
+  if(targetingData[@"gender"] != nil) {
+    if([targetingData[@"gender"] isEqualToString:@"male"]){
+      _gender = kGADGenderMale;
+    } else {
+      _gender = kGADGenderFemale;
+    }
+  }
+
+  if(targetingData[@"month"] != nil && targetingData[@"day"] != nil && targetingData[@"year"] != nil) {
+    NSDateComponents *components = [[NSDateComponents alloc] init];
+    components.month = [RCTConvert NSInteger:targetingData[@"month"]];
+    components.day = [RCTConvert NSInteger:targetingData[@"day"]];
+    components.year = [RCTConvert NSInteger:targetingData[@"year"]];
+    _birthday = [[NSCalendar currentCalendar] dateFromComponents:components];
+  }
+
+  if(targetingData[@"lat"] != nil && targetingData[@"long"] != nil){
+    _location = [[CLLocation alloc]
+                  initWithLatitude:[RCTConvert double:targetingData[@"lat"]]
+                  longitude:[RCTConvert double:targetingData[@"long"]]];
+  }
+}
+
+RCT_EXPORT_METHOD(requestAd:(RCTResponseSenderBlock)callback)
 {
   if ([_interstitial hasBeenUsed] || _interstitial == nil) {
     _requestAdCallback = callback;
@@ -41,25 +97,17 @@ RCT_EXPORT_METHOD(requestAd:(NSDictionary *)targetingData
     _interstitial.delegate = self;
 
     GADRequest *request = [GADRequest request];
-    if([targetingData[@"gender"] isEqualToString:@"male"]){
-      request.gender = kGADGenderMale;
-    } else {
-      request.gender = kGADGenderFemale;
+
+    if(_gender != nil){
+      request.gender = _gender;
     }
-
-    NSDateComponents *components = [[NSDateComponents alloc] init];
-    components.month = [RCTConvert NSInteger:targetingData[@"month"]];
-    components.day = [RCTConvert NSInteger:targetingData[@"day"]];
-    components.year = [RCTConvert NSInteger:targetingData[@"year"]];
-    request.birthday = [[NSCalendar currentCalendar] dateFromComponents:components];
-
-    CLLocation *currentLocation = [[CLLocation alloc]
-                                    initWithLatitude:[RCTConvert double:targetingData[@"lat"]]
-                                    longitude:[RCTConvert double:targetingData[@"long"]]];
-    if (currentLocation) {
-      [request setLocationWithLatitude:currentLocation.coordinate.latitude
-                             longitude:currentLocation.coordinate.longitude
-                              accuracy:currentLocation.horizontalAccuracy];
+    if(_birthday != nil){
+      request.birthday;
+    }
+    if (_location) {
+      [request setLocationWithLatitude:_location.coordinate.latitude
+                             longitude:_location.coordinate.longitude
+                              accuracy:_location.horizontalAccuracy];
     }
 
     if(_testDeviceID) {
