@@ -24,18 +24,29 @@ export default class AdMobBanner extends React.Component {
   }
 
   render() {
-    const { adUnitID, testDeviceID, bannerSize, style, didFailToReceiveAdWithError } = this.props;
+    const {
+      adUnitID,
+      testDeviceID,
+      bannerSize,
+      style,
+      didFailToReceiveAdWithError,
+      adViewDidReceiveAd,
+      adViewWillPresentScreen,
+      adViewWillDismissScreen,
+      adViewDidDismissScreen,
+      adViewWillLeaveApplication } = this.props;
+      
     return (
-      <View style={this.props.style}>
+      <View style={style}>
         <RNBanner
           style={this.state.style}
           onSizeChange={this.onSizeChange.bind(this)}
-          onAdViewDidReceiveAd={this.props.adViewDidReceiveAd}
+          onAdViewDidReceiveAd={adViewDidReceiveAd}
           onDidFailToReceiveAdWithError={(event) => didFailToReceiveAdWithError(event.nativeEvent.error)}
-          onAdViewWillPresentScreen={this.props.adViewWillPresentScreen}
-          onAdViewWillDismissScreen={this.props.adViewWillDismissScreen}
-          onAdViewDidDismissScreen={this.props.adViewDidDismissScreen}
-          onAdViewWillLeaveApplication={this.props.adViewWillLeaveApplication}
+          onAdViewWillPresentScreen={adViewWillPresentScreen}
+          onAdViewWillDismissScreen={adViewWillDismissScreen}
+          onAdViewDidDismissScreen={adViewDidDismissScreen}
+          onAdViewWillLeaveApplication={adViewWillLeaveApplication}
           testDeviceID={testDeviceID}
           adUnitID={adUnitID}
           bannerSize={bannerSize} />
