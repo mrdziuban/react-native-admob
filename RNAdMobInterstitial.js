@@ -77,6 +77,8 @@ module.exports = {
   setGender: gender => RNAdMobInterstitial.setGender(gender),
   setBirthday: birthday => RNAdMobInterstitial.setBirthday(birthday),
   setLocation: coordinates => RNAdMobInterstitial.setLocation(coordinates),
+  setChildDirected: childDirected => RNAdMobInterstitial.setChildDirected(childDirected),
+  setContentUrl: contentUrl => RNAdMobInterstitial.setContentUrl(contentUrl),
   tryShowNewInterstitial,
   addEventListener,
   removeEventListener,

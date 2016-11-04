@@ -6,11 +6,13 @@
   GADInterstitial  *_interstitial;
   NSString *_adUnitID;
   NSString *_testDeviceID;
-  RCTResponseSenderBlock _requestAdCallback;
-  RCTResponseSenderBlock _showAdCallback;
+  NSString *_contentUrl;
   NSCalendar *_birthday;
   GADGender *_gender;
   CLLocation *_location;
+  BOOL _childDirected;
+  RCTResponseSenderBlock _requestAdCallback;
+  RCTResponseSenderBlock _showAdCallback;
 }
 
 @synthesize bridge = _bridge;
@@ -34,9 +36,19 @@ RCT_EXPORT_METHOD(setTestDeviceID:(NSString *)testDeviceID)
   _testDeviceID = testDeviceID;
 }
 
+RCT_EXPORT_METHOD(setChildDirected:(BOOL *)childDirected)
+{
+  _childDirected = childDirected;
+}
+
+RCT_EXPORT_METHOD(setContentUrl:(NSString *)contentUrl)
+{
+  _contentUrl = contentUrl;
+}
+
 RCT_EXPORT_METHOD(setGender:(NSString *)gender)
 {
-  if([gender isEqualToString:@"male"]){
+  if ([gender isEqualToString:@"male"]) {
     _gender = kGADGenderMale;
   } else {
     _gender = kGADGenderFemale;
@@ -45,16 +57,16 @@ RCT_EXPORT_METHOD(setGender:(NSString *)gender)
 
 RCT_EXPORT_METHOD(setLocation:(NSDictionary *)coordinates)
 {
-  if(coordinates[@"lat"] != nil && coordinates[@"long"] != nil){
+  if (coordinates[@"lat"] && coordinates[@"long"]) {
     _location = [[CLLocation alloc]
-                  initWithLatitude:[RCTConvert double:coordinates[@"lat"]]
-                  longitude:[RCTConvert double:coordinates[@"long"]]];
+                 initWithLatitude:[RCTConvert double:coordinates[@"lat"]]
+                 longitude:[RCTConvert double:coordinates[@"long"]]];
   }
 }
 
 RCT_EXPORT_METHOD(setBirthday:(NSDictionary *)birthday)
 {
-  if(birthday[@"month"] != nil && birthday[@"day"] != nil && birthday[@"year"] != nil) {
+  if (birthday[@"month"] && birthday[@"day"] && birthday[@"year"]) {
     NSDateComponents *components = [[NSDateComponents alloc] init];
     components.month = [RCTConvert NSInteger:birthday[@"month"]];
     components.day = [RCTConvert NSInteger:birthday[@"day"]];
@@ -65,26 +77,24 @@ RCT_EXPORT_METHOD(setBirthday:(NSDictionary *)birthday)
 
 RCT_EXPORT_METHOD(setTargetingData:(NSDictionary *)targetingData)
 {
-  if(targetingData[@"gender"] != nil) {
-    if([targetingData[@"gender"] isEqualToString:@"male"]){
-      _gender = kGADGenderMale;
-    } else {
-      _gender = kGADGenderFemale;
-    }
+  if (targetingData[@"gender"]) {
+    [self setGender:targetingData[@"gender"]];
   }
 
-  if(targetingData[@"month"] != nil && targetingData[@"day"] != nil && targetingData[@"year"] != nil) {
-    NSDateComponents *components = [[NSDateComponents alloc] init];
-    components.month = [RCTConvert NSInteger:targetingData[@"month"]];
-    components.day = [RCTConvert NSInteger:targetingData[@"day"]];
-    components.year = [RCTConvert NSInteger:targetingData[@"year"]];
-    _birthday = [[NSCalendar currentCalendar] dateFromComponents:components];
+  if (targetingData[@"month"] && targetingData[@"day"] && targetingData[@"year"]) {
+    [self setBirthday:targetingData];
   }
 
-  if(targetingData[@"lat"] != nil && targetingData[@"long"] != nil){
-    _location = [[CLLocation alloc]
-                  initWithLatitude:[RCTConvert double:targetingData[@"lat"]]
-                  longitude:[RCTConvert double:targetingData[@"long"]]];
+  if (targetingData[@"lat"] && targetingData[@"long"]) {
+    [self setLocation:targetingData];
+  }
+
+  if (targetingData[@"childDirected"]) {
+    [self setChildDirected:[RCTConvert BOOL:targetingData[@"childDirected"]]];
+  }
+
+  if (targetingData[@"contentUrl"]) {
+    [self setContentUrl:targetingData[@"contentUrl"]];
   }
 }
 
@@ -96,27 +106,8 @@ RCT_EXPORT_METHOD(requestAd:(RCTResponseSenderBlock)callback)
     _interstitial = [[GADInterstitial alloc] initWithAdUnitID:_adUnitID];
     _interstitial.delegate = self;
 
-    GADRequest *request = [GADRequest request];
+    GADRequest *request = [self getRequestWithTargeting];
 
-    if(_gender != nil){
-      request.gender = _gender;
-    }
-    if(_birthday != nil){
-      request.birthday;
-    }
-    if (_location) {
-      [request setLocationWithLatitude:_location.coordinate.latitude
-                             longitude:_location.coordinate.longitude
-                              accuracy:_location.horizontalAccuracy];
-    }
-
-    if(_testDeviceID) {
-      if([_testDeviceID isEqualToString:@"EMULATOR"]) {
-        request.testDevices = @[kGADSimulatorID];
-      } else {
-        request.testDevices = @[_testDeviceID];
-      }
-    }
     [_interstitial loadRequest:request];
   } else {
     callback(@[@"Ad is already loaded."]); // TODO: make proper error via RCTUtils.h
@@ -142,6 +133,35 @@ RCT_EXPORT_METHOD(isReady:(RCTResponseSenderBlock)callback)
 
 
 #pragma mark delegate events
+
+- (GADRequest *)getRequestWithTargeting {
+  GADRequest *request = [GADRequest request];
+  if (_gender) {
+    request.gender = _gender;
+  }
+  if (_birthday) {
+    request.birthday = _birthday;
+  }
+  if (_location) {
+    [request setLocationWithLatitude:_location.coordinate.latitude
+                           longitude:_location.coordinate.longitude
+                            accuracy:_location.horizontalAccuracy];
+  }
+  if (_childDirected) {
+    [request tagForChildDirectedTreatment:YES];
+  }
+  if (_contentUrl) {
+    request.contentURL = _contentUrl;
+  }
+  if (_testDeviceID) {
+    if ([_testDeviceID isEqualToString:@"EMULATOR"]) {
+      request.testDevices = @[kGADSimulatorID];
+    } else {
+      request.testDevices = @[_testDeviceID];
+    }
+  }
+  return request;
+}
 
 - (void)interstitialDidReceiveAd:(GADInterstitial *)ad {
   [self.bridge.eventDispatcher sendDeviceEventWithName:@"interstitialDidLoad" body:nil];
