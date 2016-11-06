@@ -69,16 +69,50 @@ const tryShowNewInterstitial = (testID) => {
   });
 };
 
+const setBirthday = (birthday) => {
+  if (birthday && birthday instanceof Date) {
+    const month = birthday.getMonth() + 1;
+    const day = birthday.getDate();
+    const year = birthday.getFullYear();
+    RNAdMobInterstitial.setBirthday({ day, month, year });
+  }
+};
+
+const setChildDirected = (childDirected) => {
+  RNAdMobInterstitial.setChildDirected(childDirected);
+}
+
+const setContentUrl = (contentUrl) => {
+  RNAdMobInterstitial.setContentUrl(contentUrl);
+}
+
+const setGender = (gender) => {
+  RNAdMobInterstitial.setGender(gender);
+}
+
+const setLocation = (location) => {
+  RNAdMobInterstitial.setLocation(location);
+};
+
+const setTargetingData = (targetingData) => {
+  const { birthday, childDirected, contentUrl, gender, location } = targetingData;
+  birthday && setBirthday(birthday);
+  typeof childDirected !== 'undefinded' && setChildDirected(childDirected);
+  contentUrl && setContentUrl(contentUrl);
+  gender && setGender(gender);
+  location && setLocation(location);
+};
+
 module.exports = {
   ...RNAdMobInterstitial,
   requestAd: (cb = () => {}) => RNAdMobInterstitial.requestAd(cb), // requestAd callback is optional
   showAd: (cb = () => {}) => RNAdMobInterstitial.showAd(cb),       // showAd callback is optional
-  setTargetingData: targetingData => RNAdMobInterstitial.setTargetingData(targetingData),
-  setGender: gender => RNAdMobInterstitial.setGender(gender),
-  setBirthday: birthday => RNAdMobInterstitial.setBirthday(birthday),
-  setLocation: coordinates => RNAdMobInterstitial.setLocation(coordinates),
-  setChildDirected: childDirected => RNAdMobInterstitial.setChildDirected(childDirected),
-  setContentUrl: contentUrl => RNAdMobInterstitial.setContentUrl(contentUrl),
+  setTargetingData,
+  setGender,
+  setBirthday,
+  setLocation,
+  setChildDirected,
+  setContentUrl,
   tryShowNewInterstitial,
   addEventListener,
   removeEventListener,

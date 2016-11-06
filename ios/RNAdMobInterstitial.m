@@ -75,29 +75,6 @@ RCT_EXPORT_METHOD(setBirthday:(NSDictionary *)birthday)
   }
 }
 
-RCT_EXPORT_METHOD(setTargetingData:(NSDictionary *)targetingData)
-{
-  if (targetingData[@"gender"]) {
-    [self setGender:targetingData[@"gender"]];
-  }
-
-  if (targetingData[@"month"] && targetingData[@"day"] && targetingData[@"year"]) {
-    [self setBirthday:targetingData];
-  }
-
-  if (targetingData[@"lat"] && targetingData[@"long"]) {
-    [self setLocation:targetingData];
-  }
-
-  if (targetingData[@"childDirected"]) {
-    [self setChildDirected:[RCTConvert BOOL:targetingData[@"childDirected"]]];
-  }
-
-  if (targetingData[@"contentUrl"]) {
-    [self setContentUrl:targetingData[@"contentUrl"]];
-  }
-}
-
 RCT_EXPORT_METHOD(requestAd:(RCTResponseSenderBlock)callback)
 {
   if ([_interstitial hasBeenUsed] || _interstitial == nil) {
