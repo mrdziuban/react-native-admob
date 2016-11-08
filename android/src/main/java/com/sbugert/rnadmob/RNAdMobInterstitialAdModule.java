@@ -2,7 +2,11 @@ package com.sbugert.rnadmob;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.location.Location;
 import android.support.annotation.Nullable;
+
+import java.util.GregorianCalendar;
+import java.util.Date;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
@@ -10,6 +14,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
@@ -19,6 +24,11 @@ public class RNAdMobInterstitialAdModule extends ReactContextBaseJavaModule {
   InterstitialAd mInterstitialAd;
   String adUnitID;
   String testDeviceID;
+  String contentUrl;
+  Integer gender;
+  Date birthday;
+  Location location;
+  Boolean childDirected = false;
   Callback requestAdCallback;
   Callback showAdCallback;
 
@@ -83,6 +93,19 @@ public class RNAdMobInterstitialAdModule extends ReactContextBaseJavaModule {
     getReactApplicationContext().getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(eventName, params);
   }
 
+  private AdRequest.Builder getRequestWithTargeting() {
+    AdRequest.Builder request = new AdRequest.Builder();
+    if (this.location != null)
+      request.setLocation(this.location);
+    if (this.gender != null)
+      request.setGender(this.gender);
+    if (this.birthday != null)
+      request.setBirthday(this.birthday);
+    if (this.childDirected != null)
+      request.tagForChildDirectedTreatment(this.childDirected);
+    return request;
+  }
+
   @ReactMethod
   public void setAdUnitID(String adUnitID) {
     mInterstitialAd.setAdUnitId(adUnitID);
@@ -94,6 +117,43 @@ public class RNAdMobInterstitialAdModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
+  public void setGender(String gender) {
+    if (gender.equals("male")) {
+      this.gender = AdRequest.GENDER_MALE;
+    } else {
+      this.gender = AdRequest.GENDER_FEMALE;
+    }
+  }
+
+  @ReactMethod
+  public void setBirthday(ReadableMap birthday) {
+    int day = birthday.getInt("day");
+    int month = birthday.getInt("month");
+    int year = birthday.getInt("year");
+    this.birthday = new GregorianCalendar(year, month, day).getTime();
+  }
+
+  @ReactMethod
+  public void setLocation(ReadableMap coordinates) {
+    double latitude = coordinates.getDouble("lat");
+    double longitude = coordinates.getDouble("long");
+    this.location = new Location("");
+    this.location.setLatitude(latitude);
+    this.location.setLongitude(longitude);
+  }
+
+  @ReactMethod
+  public void setChildDirected(Boolean childDirected) {
+    this.childDirected = childDirected;
+  }
+
+  @ReactMethod
+  public void setContentUrl(String contentUrl) {
+    this.contentUrl = contentUrl;
+  }
+
+
+  @ReactMethod
   public void requestAd(final Callback callback) {
     new Handler(Looper.getMainLooper()).post(new Runnable() {
       @Override
@@ -102,7 +162,7 @@ public class RNAdMobInterstitialAdModule extends ReactContextBaseJavaModule {
           callback.invoke("Ad is already loaded."); // TODO: make proper error
         } else {
           requestAdCallback = callback;
-          AdRequest.Builder adRequestBuilder = new AdRequest.Builder();
+          AdRequest.Builder adRequestBuilder = getRequestWithTargeting();
           if (testDeviceID != null){
             if (testDeviceID.equals("EMULATOR")) {
               adRequestBuilder = adRequestBuilder.addTestDevice(AdRequest.DEVICE_ID_EMULATOR);

@@ -97,7 +97,7 @@ const setLocation = (location) => {
 const setTargetingData = (targetingData) => {
   const { birthday, childDirected, contentUrl, gender, location } = targetingData;
   birthday && setBirthday(birthday);
-  typeof childDirected !== 'undefinded' && setChildDirected(childDirected);
+  typeof childDirected !== 'undefined' && setChildDirected(childDirected);
   contentUrl && setContentUrl(contentUrl);
   gender && setGender(gender);
   location && setLocation(location);
